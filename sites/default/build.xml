@@ -1,0 +1,381 @@
+<project name="Carwash CMS" basedir="." default="...">
+
+    <target name="declare-properties">
+        <property name="basedir" value="${project.basedir}" />
+        <property name="site_id" value="default" />
+        <echo>Properties for ${site_id} properly declared</echo>
+    </target>
+
+    <target name="install-site" depends="declare-properties, -drush-install, -translate, fix-site-files-permissions, cc-all">
+        <echo>${app.name}</echo>
+        <echo>Site successfully installed</echo>
+    </target>
+
+    <!-- Updates the locale information. -->
+    <target name="-translate" depends="-check-vars" >
+        <!--drush command="l10n-update-refresh" assume="yes" >
+            <param>${app.locale}</param>
+        </drush>
+        <drush command="l10n-update" assume="yes" >
+            <param>${app.locale}</param>
+        </drush-->
+    </target>
+
+    <!-- Execute the drush site-install command against the given directory and the given database. -->
+    <target name="-drush-install" depends="unpublish, publish" >
+        <drush command="site-install" assume="yes" failonerror="false" >
+            <option name="site-name">${app.name}</option>
+            <option name="sites-subdir">${site_id}</option>
+            <option name="db-url">${database.url}</option>
+            <option name="site-mail">${app.mail}</option>
+            <option name="account-name">${admin.account.name}</option>
+            <option name="account-pass">${admin.account.password}</option>
+            <option name="account-mail">${admin.account.email}</option>
+            <option name="clean-url">${app.cleanUrl}</option>
+            <param>${app.profile}</param>
+        </drush>
+        <!-- set permissions back -->
+        <chmod mode="${default.dir.mode}" file="${publish.dir}/sites" />
+        <chmod mode="${default.file.mode}" file="${publish.dir}/sites/${site_id}/settings.php" />
+        <!-- drush command="features-revert-all" assume="yes" / -->
+    </target>
+
+    <target name="fix-site-files-permissions" depends="-check-vars" >
+        <echo>Setting group to ${apache.group} ...</echo>
+        <echo>Executing: find . ! \( -path ./.svn -prune -or -group www-data \) -exec chgrp ${apache.group} {} +"</echo>
+	 <exec executable="find" dir="${publish.dir}" logoutput="true" checkreturn="true" outputProperty="output.find">
+            <arg line=" * ! \( -path ./.svn -prune -or -group ${apache.group} \) " />
+            <arg line="-exec chgrp ${apache.group} {} +" />
+        </exec>
+        <echo msg="Files: ${output.find}" />
+        <echo>Setting permissions ...</echo>
+        <if>
+            <not><isset property="-is.working.copy" /></not>
+            <then>
+                <!-- Otherwise drupal cannot write images in /files directory -->
+                <exec command="chown -R ${apache.group}:${apache.group} ${publish.dir}/sites/${site_id}" escape="false" />
+            </then>
+        </if>
+        <exec command="chmod -R ${default.dir.mode} ${publish.dir}/sites/${site_id}" escape="false" />
+        <exec executable="find" dir="${publish.dir}/sites/${site_id}/files" logoutput="true" checkreturn="true" >
+            <arg line=". -type f ! -name .htaccess ! -perm ${files.file.mode} " />
+            <arg line="-exec chmod ${files.file.mode} {} +" />
+        </exec>
+        <exec executable="find" dir="${publish.dir}/sites/${site_id}/files" logoutput="true" checkreturn="true" >
+            <arg line=". -type d ! -perm ${files.dir.mode} " />
+            <arg line="-exec chmod ${files.dir.mode} {} +" />
+        </exec>
+    </target>
+
+    <target name="cc-all" depends="-check-settings"
+        description="Clear all cache." >
+        <drush command="cache-clear" assume="yes" >
+            <param>all</param>
+	</drush>
+    </target>
+
+    <target name="-check-settings" depends="-check-vars" >
+         <if>
+            <available file="${publish.dir}/sites/${site_id}/settings.php" />
+            <then>
+                <echo>Settings.php available.</echo>
+            </then>
+            <else>
+                <fail msg="Site does not appear to be installed yet." />
+            </else>
+         </if>
+    </target>
+
+    <!-- Deletes the published site. -->
+    <target name="unpublish" depends="-get-confirmation, -delete-content-and-settings, -check-docroot" >
+        <echo>Unpublish done.</echo>
+    </target>
+
+    <target name="publish" depends="-update-site-docroot, setup-settings"
+         description="Update files in the web server document root." >
+        <echo>Publish to ${publish.dir} completed.</echo>
+    </target>
+
+    <!-- We don't depend on -check-vars, but it's good to "refresh" vars before taking this decision. -->
+    <target name="-get-confirmation" depends="-check-vars" >
+        <echo>DELETING EVERYTHING, even database and user contents</echo>
+    </target>
+
+    <target name="-delete-content-and-settings" depends="-check-vars, -ensure-sites-default-writable" >
+         <if>
+            <available file="${publish.dir}/sites/${site_id}" />
+            <then>
+                <echo>Deleting content and setting files in ${publish.dir}/sites/${site_id} ...</echo>
+                <delete failonerror="true" includeemptydirs="true" >
+                    <fileset dir="${publish.dir}" defaultexcludes="false" >
+                        <include name="sites/${site_id}/files/**/*" />
+                        <include name="sites/${site_id}/settings.php" />
+                    </fileset>
+                </delete>
+            </then>
+         </if>
+    </target>
+
+    <!-- We don't need to check the docroot in this mulstite project -->
+    <target name="-check-docroot" depends="-check-vars, -ensure-sites-default-writable" >
+        <if>
+            <isset property="-is.working.copy" />
+            <then>
+                <echo>Running on working copy. No clean done.</echo>
+            </then>
+        </if>
+    </target>
+
+   <target name="-update-site-docroot" depends="-check-vars, -check-docroot" >
+        <if>
+            <isset property="-is.working.copy" />
+            <then>
+                <echo>Running on working copy. Skipping docroot update.</echo>
+            </then>
+            <else>
+                <echo>Publishing to ${publish.dir}</echo>
+                <copy todir="${publish.dir}" preservemode="false" tstamp="true">
+                    <fileset dir="${basedir}" expandsymboliclinks="true">
+                        <include name="sites/${site_id}/files/**" />
+                        <include name="sites/${site_id}/libraries/**" />
+                        <include name="sites/${site_id}/modules/**" />
+                        <include name="sites/${site_id}/themes/**" />
+                        <include name="sites/${site_id}/patches/**" />
+                        <include name="sites/${site_id}/translations/**" />
+                        <include name="sites/${site_id}/settings.inc" />
+                        <include name="sites/${site_id}/${context}.settings.inc" />
+                    </fileset>
+                </copy>
+            </else>
+        </if>
+    </target>
+
+    <target name="setup-settings" depends="-check-vars" >
+        <echo>Building settings.php ...</echo>
+        <mkdir dir="${publish.dir}/sites/${site_id}" />
+	<chown group="${apache.group}" file="${publish.dir}/sites/${site_id}" />
+
+        <echo file="${publish.dir}/sites/${site_id}/settings.php"
+            >&lt;?php
+
+include_once __DIR__ . '/settings.inc';
+include_once __DIR__ . '/${context}.settings.inc';
+
+$conf['install_profile'] = '${app.profile}';${line.separator}</echo>
+
+        <!-- chown group="${apache.group}" file="${publish.dir}/sites/${site_id}/settings.php" / -->
+    </target>
+    <!-- Use only once. -->
+    <!--target name="secure-site" depends="-check-vars" >
+        <if>
+            <isset property="-is.working.copy" />
+            <then>
+                <echo>Running on working copy. Skipping ...</echo>
+            </then>
+            <else>
+                <echo>Setting group to ${apache.group} ...</echo>
+                <exec executable="find" dir="${publish.dir}" logoutput="true" checkreturn="true" >
+                    <arg line=". ! \( -path ./sites/${site_id}/files -prune \) " />
+                    <arg line="! -group ${apache.group} " />
+                    <arg line="-exec chgrp ${apache.group} {} + " />
+                </exec>
+                <echo>Setting permissions ...</echo>
+                <exec executable="find" dir="${publish.dir}" logoutput="true" checkreturn="true" >
+                    <arg line=". ! \( -path ./sites/${site_id}/files -prune \) " />
+                    <arg line="-type f ! -perm ${default.file.mode} " />
+                    <arg line="-exec chmod ${default.file.mode} {} + " />
+                </exec>
+                <exec executable="find" dir="${publish.dir}" logoutput="true" checkreturn="true" >
+                    <arg line=". ! \( -path ./sites/${site_id}/files -prune \) " />
+                    <arg line="-type d ! -perm ${default.dir.mode} " />
+                    <arg line="-exec chmod ${default.dir.mode} {} + " />
+                </exec>
+            </else>
+        </if>
+    </target-->
+
+    <!-- Convenient target to check all required vars -->
+    <target name="-check-vars" depends="-load-properties" unless="-check-vars.done" >
+        <phingcall target="-check-file-exists" >
+            <param name="filename" value="${basedir}/sites/${site_id}/settings.inc" />
+        </phingcall>
+
+        <phingcall target="-check-file-exists" >
+            <param name="filename" value="${basedir}/sites/${site_id}/${context}.settings.inc" />
+        </phingcall>
+        <echo>-----------------------------------</echo>
+        <echo> Executing in context: ${context}</echo>
+        <echo> Publish dir: ${publish.dir}</echo>
+        <echo>-----------------------------------</echo>
+        <if>
+            <equals arg1="${publish.dir}" arg2="${basedir}" />
+            <then>
+                <property name="-is.working.copy" value="true" />
+            </then>
+        </if>
+        <!-- Configure Drush task -->
+        <property name="drush.root" value="${publish.dir}" />
+        <taskdef name="drush" classname="DrushTask" classpath="${basedir}/phing/drush"/>
+        <property name="-check-vars.done" value="true" />
+    </target>
+
+    <target name="-ensure-sites-default-writable" depends="-check-vars" >
+        <!-- Just in case drush aborted and left this RO -->
+        <if>
+            <available file="${publish.dir}/sites/${site_id}" />
+            <then>
+                <chmod mode="${default.dir.mode}" file="${publish.dir}/sites/${site_id}" />
+            </then>
+        </if>
+    </target>
+
+    <target name="-load-properties" unless="-load-properties.done" >
+        <!-- Loading property files. Contextual first -->
+        <phingcall target="-check-file-exists" >
+            <param name="filename" value="${basedir}/sites/${site_id}/properties/${context}.build.properties" />
+        </phingcall>
+
+        <property file="${basedir}/sites/${site_id}/properties/${context}.build.properties" />
+        <if>
+            <isset property="context.common" />
+            <then>
+                <phingcall target="-check-file-exists" >
+                    <param name="filename" value="${basedir}/sites/${site_id}/properties/${context.common}.build.properties" />
+                </phingcall>
+                <property file="${basedir}/sites/${site_id}/properties/${context.common}.build.properties" />
+            </then>
+            <else>
+                <property name="context.common" value="" />
+            </else>
+        </if>
+
+        <phingcall target="-check-file-exists">
+            <param name="filename" value="${basedir}/sites/${site_id}/properties/build.properties" />
+        </phingcall>
+        <property file="${basedir}/sites/${site_id}/properties/build.properties" />
+        <!-- If not defined, default to working copy -->
+        <property name="publish.dir" value="${basedir}" />
+        <property name="default.dir.mode" value="750" />
+        <property name="default.file.mode" value="640" />
+        <property name="files.dir.mode" value="770" />
+        <property name="files.file.mode" value="660" />
+
+        <property name="-load-properties.done" value="true" />
+    </target>
+
+    <target name="-check-file-exists" >
+        <echo>Checking ${filename} ...${line.separator}</echo>
+        <if>
+            <not><available file="${filename}" /></not>
+            <then>
+                <fail msg="Missing file ${filename}." />
+            </then>
+        </if>
+    </target>
+
+    <target name="update" depends="declare-properties, publish-built-app, -update-db, cc-all"
+        description="Update site files and database.">
+        <echo>App successfully updated to: ${publish.dir}</echo>
+    </target>
+
+    <target name="publish-built-app" depends="-update-built-site-docroot"
+         description="Update files in the web server document root." >
+        <echo>Publish to ${publish.dir} completed.</echo>
+    </target>
+
+    <!-- target name="-translate-update-files" description="Update custom files strings">
+      <exec dir="${publish.dir}/sites/${site_id}" command='drush php-eval "jbs_import_general_translation_file();"'/>
+      <echo>General Translation Files Updated for ${app.name}</echo>
+    </target -->
+
+    <target name="-update-db" depends="-check-vars" >
+        <drush command="updatedb" assume="yes"/>
+        <phingcall target="cc-all" />
+        <!-- drush command="features-revert-all" assume="yes" / -->
+    </target>
+
+   <target name="-update-built-site-docroot" depends="-check-vars, -check-docroot" >
+        <if>
+            <isset property="-is.working.copy" />
+            <then>
+                <echo>Running on working copy. Skipping docroot update.</echo>
+            </then>
+            <else>
+                <echo>Publishing to ${publish.dir}</echo>
+                <copy todir="${publish.dir}" preservemode="false" tstamp="true">
+                    <fileset dir="${basedir}" expandsymboliclinks="true">
+                        <include name="sites/${site_id}/libraries/**" />
+                        <include name="sites/${site_id}/modules/**" />
+                        <include name="sites/${site_id}/themes/**" />
+                        <include name="sites/${site_id}/patches/**" />
+                        <include name="sites/${site_id}/translations/**" />
+                        <include name="sites/${site_id}/settings.inc" />
+                        <include name="sites/${site_id}/${context}.settings.inc" />
+                    </fileset>
+                </copy>
+            </else>
+        </if>
+    </target>
+
+    <target name="import-taxonomies" >
+        <!-- Import taxonomies terms -->
+        <!--taskdef name="drush" classname="DrushTask" classpath="${basedir}/phing/drush"/-->
+        <drush command="taxocsv-import" assume="yes">
+            <param>${basedir}/profiles/virgin_cms/taxonomies/age.csv tree</param>
+            <option name="check_hierarchy"></option>
+            <option name="keep_order"></option>
+            <option name="vocabulary_id">age</option>
+            <option name="vocabulary_target">existing</option>
+            <option name="vocabulary_language">en</option>
+            <option name="delete_terms"></option>
+            <option name="language">en</option>
+            <option name="check_utf8"></option>
+        </drush>
+        <drush command="taxocsv-import" assume="yes">
+            <param>${basedir}/profiles/virgin_cms/taxonomies/gender.csv tree</param>
+            <option name="check_hierarchy"></option>
+            <option name="keep_order"></option>
+            <option name="vocabulary_id">gender</option>
+            <option name="vocabulary_target">existing</option>
+            <option name="vocabulary_language">en</option>
+            <option name="delete_terms"></option>
+            <option name="language">en</option>
+            <option name="check_utf8"></option>
+        </drush>
+        <drush command="taxocsv-import" assume="yes">
+            <param>${basedir}/profiles/virgin_cms/taxonomies/genre.csv tree</param>
+            <option name="check_hierarchy"></option>
+            <option name="keep_order"></option>
+            <option name="vocabulary_id">genre</option>
+            <option name="vocabulary_target">existing</option>
+            <option name="vocabulary_language">en</option>
+            <option name="delete_terms"></option>
+            <option name="language">en</option>
+            <option name="check_utf8"></option>
+        </drush>
+        <drush command="taxocsv-import" assume="yes">
+            <param>${basedir}/profiles/virgin_cms/taxonomies/lifestyle.csv tree</param>
+            <option name="check_hierarchy"></option>
+            <option name="keep_order"></option>
+            <option name="vocabulary_id">lifestyle</option>
+            <option name="vocabulary_target">existing</option>
+            <option name="vocabulary_language">en</option>
+            <option name="delete_terms"></option>
+            <option name="language">en</option>
+            <option name="check_utf8"></option>
+        </drush>
+        <drush command="taxocsv-import" assume="yes">
+            <param>${basedir}/profiles/virgin_cms/taxonomies/pop_culture.csv tree</param>
+            <option name="check_hierarchy"></option>
+            <option name="keep_order"></option>
+            <option name="vocabulary_id">pop_culture</option>
+            <option name="vocabulary_target">existing</option>
+            <option name="vocabulary_language">en</option>
+            <option name="delete_terms"></option>
+            <option name="language">en</option>
+            <option name="check_utf8"></option>
+        </drush>
+        <!-- END Import taxonomies terms -->
+    </target>
+
+</project>

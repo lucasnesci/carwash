@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Carwash CMS" default="install" >
+
+    <tstamp>
+        <format pattern="d-m-yyyy-hh-mm" property="date" locale="es_AR"/>
+    </tstamp>
+
+    <!-- set-initial-setup to use for the general build.xml -->
+    <target name="set-initial-properties">
+        <property name="basedir" value="${project.basedir}" />
+        <!-- Setting default context -->
+        <property name="context" value="local" />
+        <property name="site" value="all" />
+        <!-- Loading application property file -->
+        <if>
+            <available file="${basedir}/properties/${context}.build.properties" />
+            <then>
+                <property file="${basedir}/properties/${context}.build.properties" />
+            </then>
+        </if>
+        <if>
+            <equals arg1="${context}" arg2="local" />
+            <then>
+                <property name="-is.working.copy" value="true" />
+            </then>
+        </if>
+        <echo>Properties for ${basedir} properly declared</echo>
+    </target>
+    <!-- END set-initial-setup to use for the general build.xml -->
+
+    <!-- Install target - Install all sites -->
+    <target name="install" depends="set-initial-properties, check-file-integrity, code-inspection, -update-docroot"
+            description="Install application from scratch.">
+        <!-- @TODO: Fetch sites id's and iterate. -->
+        <phing phingfile="${basedir}/sites/default/build.xml" target="install-site" />
+        <echo>App successfully installed</echo>
+    </target>
+    <!-- END Install target - Install all sites -->
+
+    <!-- Install script for a given site  -->
+    <target name="install-site" depends="set-initial-properties, check-file-integrity, code-inspection"
+            description="Install a site from scratch.">
+        <if>
+            <equals arg1="${site}" arg2="all" />
+            <then>
+                <echo>No site selected</echo>
+                <echo>example "phing install-site -Dcontext={context} -Dsite={site-name}"</echo>
+            </then>
+            <else>
+                <if>
+                    <available file="${basedir}/sites/${site}/build.xml" />
+                    <then>
+                        <phing phingfile="${basedir}/sites/${site}/build.xml" inheritRefs="true" target="install-site" />
+                        <echo>Site ${site} successfully installed</echo>
+                    </then>
+                    <else>
+                        <echo>Could not install "${site}"</echo>
+                        <echo>Possible reasons:</echo>
+                        <echo>  1- "${site}" directory not found in ${basedir}/sites/</echo>
+                        <echo>  2- build.xml file not found for "${site}"</echo>
+                        <echo>FAILED: SITE NOT INSTALED</echo>
+                    </else>
+                </if>
+            </else>
+        </if>
+    </target>
+    <!-- END Install script for a given site -->
+
+    <!-- All files related to the project (Not specific sites) -->
+    <target name="-update-docroot" depends="-clean-docroot">
+        <if>
+            <equals arg1="${context}" arg2="local" />
+            <then>
+                <echo>Running on working copy. Skipping docroot update.</echo>
+            </then>
+            <else>
+                <if>
+                   <!-- Create directory in case it does not exist -->
+                   <not><available file="${publish.dir}" /></not>
+                   <then>
+                       <echo>Creating ${publish.dir} directory</echo>
+                       <mkdir dir="${publish.dir}" />
+                   </then>
+                </if>
+                <echo>Publishing to ${publish.dir}</echo>
+                <copy todir="${publish.dir}" preservemode="false" tstamp="true">
+                    <fileset dir="${basedir}" expandsymboliclinks="true">
+                        <include name=".htaccess" />
+                        <include name="version.txt" />
+                        <include name="cron.php" />
+                        <include name="index.php" />
+                        <include name="info.php" />
+                        <include name="includes/**" />
+                        <include name="misc/**" />
+                        <include name="modules/**" />
+                        <include name="profiles/**" />
+                        <include name="themes/**" />
+                        <include name="scripts/**" />
+                        <include name="sites/all/**" />
+                        <include name="sites/sites.php" />
+                        <include name="migration/**" />
+                    </fileset>
+                </copy>
+            </else>
+        </if>
+    </target>
+    <!-- END All files related to the project (Not specific sites) -->
+
+    <!-- Clear all directory before starting deploy process -->
+    <target name="-clean-docroot" depends="-ensure-sites-default-writable">
+        <if>
+            <isset property="-is.working.copy" />
+            <then>
+                <echo>Running on working copy. Skipping clean docroot.</echo>
+            </then>
+            <else>
+                <if>
+                    <available file="${publish.dir}" />
+                    <then>
+                        <echo>Cleaning code from ${publish.dir} ...</echo>
+                        <delete failonerror="true" includeemptydirs="true" >
+                            <fileset dir="${publish.dir}" >
+                                <include name="sites/${site_id}/**/*"/>
+                            </fileset>
+                        </delete>
+                        <delete dir="${publish.dir}"/>
+                    </then>
+                </if>
+            </else>
+        </if>
+    </target>
+    <!-- END Clear all directory before starting deploy process -->
+
+    <target name="-ensure-sites-default-writable" >
+        <!-- Just in case drush aborted and left this RO -->
+        <if>
+            <available file="${publish.dir}/sites/default" />
+            <then>
+                <echo>Setting propper permissions to ${publish.dir}/sites/default</echo>
+                <exec command="chmod -R 770 ${publish.dir}/sites/default/files" escape="false" />
+            </then>
+        </if>
+    </target>
+
+    <!-- Check that there are not BOM's, die, var_dumps, etc.. -->
+    <target name="check-file-integrity"
+        description="Checks that php files are not using UTF-8 BOM or debug code." >
+        <trycatch>
+            <try>
+                <echo>Checking recent files are not using BOM or debug statements ...</echo>
+                <exec dir="${basedir}" executable="build-scripts/find-bom.sh" logoutput="true" checkreturn="true" />
+                <echo>Ok.</echo>
+            </try>
+            <catch>
+                <echo>Please remove byte order mark (BOM)/ debug code from the files above.</echo>
+                <fail msg="Offending files found."/>
+            </catch>
+        </trycatch>
+    </target>
+    <!-- END Check that there are not BOM's, var_dumps, etc.. -->
+
+    <!-- SVN settings -->
+    <target name="get-revision" >
+        <svninfo element="url" propertyname="svn.url"/>
+        <svnlastrevision propertyname="svn.lastrevision" lastchanged="true"/>
+        <php function="preg_replace" returnProperty="svn.branch">
+            <param value="/.*svn\/PortalDrupal/" />
+            <param value="" />
+            <param value="${svn.url}" />
+        </php>
+        <echo file="${basedir}/version.txt" append="false">Branch: ${svn.branch}${line.separator}</echo>
+        <echo file="${basedir}/version.txt" append="true">Revision: ${svn.lastrevision}${line.separator}</echo>
+        <echo>Branch: ${svn.branch}</echo>
+        <echo>Revision: ${svn.lastrevision}</echo>
+    </target>
+    <!-- END SVN settings -->
+
+    <!-- Update target (build) -->
+    <target name="update" depends="set-initial-properties, check-file-integrity, code-inspection, -update-built-docroot"
+            description="Update site files and database.">
+        <!-- @TODO: Fetch sites id's and iterate. -->
+        <phing phingfile="${basedir}/sites/default/build.xml" inheritRefs="true" target="update" />
+        <echo>App successfully updated</echo>
+    </target>
+    <!-- END Update target (build) -->
+
+    <!-- Run Code Sniffer -->
+    <target name="run-cs" depends="set-initial-properties, check-file-integrity, code-inspection">
+        <echo>Code Sniffer OK</echo>
+    </target>
+    <!-- END Run Code Sniffer -->
+
+    <target name="code-inspection" description="runs code inspection on the base directory">
+        <if>
+            <or>
+                <equals arg1="${context}" arg2="local" />
+                <equals arg1="${context}" arg2="dev" />
+            </or>
+            <then>
+                <property name="-usefile" value="true" />
+            </then>
+            <else>
+                <echo>Running on context. Skipping summary file creation.</echo>
+                <property name="-usefile" value="false" />
+            </else>
+        </if>
+        <phpcodesniffer
+            standard="coder_sniffer"
+            showSniffs="false"
+            verbosity = "true"
+            showWarnings="true"
+            haltonerror="true"
+            format="summary"
+            >
+            <fileset dir="${basedir}/sites/all/modules/custom">
+              <include name="**/*.php"/>
+              <include name="**/*.module"/>
+              <include name="**/*.info"/>
+              <include name="**/*.inc"/>
+              <exclude name="**/*.features.*"/>
+              <exclude name="**/*.field_group.inc"/>
+              <exclude name="**/*.strongarm.inc"/>
+              <exclude name="**/*.views_default.inc"/>
+            </fileset>
+            <formatter type="checkstyle" usefile="${-usefile}" outfile="${basedir}/summary.txt"/>
+        </phpcodesniffer>
+    </target>
+
+    <!-- Secure Sites -->
+    <!--target name="secure-sites" depends="" >
+        <if>
+            <isset property="-is.working.copy" />
+            <then>
+                <echo>Running on working copy. Skipping ...</echo>
+            </then>
+            <else>
+                <echo>Setting group to ${apache.group} ...</echo>
+                <exec executable="find" dir="${publish.dir}" logoutput="true" checkreturn="true" >
+                    <arg line=". ! \( -path ./sites/default/files -prune \) " />
+                    <arg line="! -group ${apache.group} " />
+                    <arg line="-exec chgrp ${apache.group} {} + " />
+                </exec>
+                <echo>Setting permissions ...</echo>
+                <exec executable="find" dir="${publish.dir}" logoutput="true" checkreturn="true" >
+                    <arg line=". ! \( -path ./sites/default/files -prune \) " />
+                    <arg line="-type f ! -perm ${default.file.mode} " />
+                    <arg line="-exec chmod ${default.file.mode} {} + " />
+                </exec>
+                <exec executable="find" dir="${publish.dir}" logoutput="true" checkreturn="true" >
+                    <arg line=". ! \( -path ./sites/default/files -prune \) " />
+                    <arg line="-type d ! -perm ${default.dir.mode} " />
+                    <arg line="-exec chmod ${default.dir.mode} {} + " />
+                </exec>
+            </else>
+        </if>
+    </target-->
+
+    <!-- Target to update already installed application -->
+    <target name="-update-built-docroot">
+        <if>
+            <equals arg1="${context}" arg2="local" />
+            <then>
+                <echo>Running on working copy. Skipping docroot update.</echo>
+            </then>
+            <else>
+                <if>
+                   <!-- Create directory in case it does not exist -->
+                   <not><available file="${publish.dir}" /></not>
+                   <then>
+                       <echo>Update Failed:</echo>
+                       <fail msg="Application not built yet. Cannot perform update"/>
+                   </then>
+                   <else>
+                       <echo>Publishing to ${publish.dir}</echo>
+                       <copy todir="${publish.dir}" preservemode="false" tstamp="true">
+                           <fileset dir="${basedir}" expandsymboliclinks="true">
+                               <include name="includes/**" />
+                               <include name="misc/**" />
+                               <include name="modules/**" />
+                               <include name="profiles/**" />
+                               <include name="scripts/**" />
+                               <include name="sites/all/**" />
+                           </fileset>
+                       </copy>
+                   </else>
+                </if>
+            </else>
+        </if>
+    </target>
+    <!-- END Target to update already installed application -->
+
+</project>

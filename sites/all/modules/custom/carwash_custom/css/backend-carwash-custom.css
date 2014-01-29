@@ -1,0 +1,9 @@
+/**
+ * Customize add service page.
+ */
+ #field-lavadero-values .field-type-taxonomy-term-reference label,
+ #field-lavadero-values .form-item-field-lavadero-und-0-field-price-und-0-value label {
+  display: inline-block;
+  min-width: 60px;
+  padding: 0 0 10px 0;
+ }

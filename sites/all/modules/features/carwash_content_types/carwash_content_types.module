@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Carwash content types feature.
+ */
+
+include_once 'carwash_content_types.features.inc';

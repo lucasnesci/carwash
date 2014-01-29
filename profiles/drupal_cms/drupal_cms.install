@@ -1,0 +1,38 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the standard install profile.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Perform actions to set up the site for this profile.
+ *
+ * @see system_install()
+ */
+function drupal_cms_install() {
+  include_once DRUPAL_ROOT . '/profiles/standard/standard.install';
+  standard_install();
+
+  // Remove article and page content types.
+  node_type_delete('article');
+  node_type_delete('page');
+
+  variable_set('service_number', 0);
+  variable_set('theme_default', 'bluemasters');
+
+  // Activate and enabled theme.
+  db_update('system')
+    ->fields(array('status' => 1))
+    ->condition('name', 'bluemasters')
+    ->condition('type', 'theme')
+    ->execute();
+
+  // Desactivate drupal default theme.
+  db_update('system')
+    ->fields(array('status' => 0))
+    ->condition('name', 'bartik')
+    ->condition('type', 'theme')
+    ->execute();
+}

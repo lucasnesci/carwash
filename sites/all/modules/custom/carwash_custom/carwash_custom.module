@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ * This file contains extra functions for Car Wash site.
+ */
+
+/**
+ * Implements of hook_form_FORM_ID_alter().
+ */
+function carwash_custom_form_node_form_alter(&$form, $form_state) {
+  $form['path']['#access'] = FALSE;
+  $form['comment_settings']['#access'] = FALSE;
+  $form['author']['#access'] = FALSE;
+  $form['options']['#access'] = FALSE;
+  $form['menu']['#access'] = FALSE;
+  // $form['menu']['enabled']['#default_value'] = 1;
+  // $form['menu']['link']['link_title']['#default_value'] = $form['title']['#default_value'];
+  $form['revision_information']['#access'] = FALSE;
+}
+
+/**
+ * Implements of hook_form_FORM_ID_alter().
+ */
+function carwash_custom_form_ct_about_us_node_form_alter(&$form, $form_state) {
+  $form['menu']['#access'] = TRUE;
+}
+
+/**
+ * Implements of hook_form_FORM_ID_alter().
+ */
+function carwash_custom_form_ct_service_node_form_alter(&$form, $form_state) {
+  $form['title']['#required'] = FALSE;
+  $form['title']['#attributes']['disabled'] = 'disabled';
+  $form['#submit'][] = 'form_ct_service_submit';
+  dsm($form);
+}
+
+/**
+ * Function callback.
+ */
+function form_ct_service_submit(&$form, &$form_state) {
+  if ($form_state['values']['title'] == NULL) {
+    $service_number = variable_get('service_number', 0);
+    $service_number_plus = $service_number + 1;
+    $form_state['values']['title'] = $service_number_plus;
+    variable_set('service_number', $service_number_plus);
+  }
+}

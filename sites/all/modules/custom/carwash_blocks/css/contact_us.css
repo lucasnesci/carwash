@@ -1,0 +1,30 @@
+/**
+ * Contact us icons.
+ */
+.ico img {
+  width: 30px;
+  height: 30px;
+}
+
+/**
+ * Contact us sidebar-first region style.
+ */
+.not-front .region-sidebar-first .block-carwash-blocks h3,
+.not-front .region-sidebar-first .block-carwash-blocks h4 {
+  font-size: 14px;
+  margin: 0 0 0 0;
+}
+
+.not-front .region-sidebar-first .block-carwash-blocks h4 {
+  font-weight: normal;
+  margin: 0 0 10px 0;
+}
+
+.contact-us-address-map iframe {
+  width: 100%;
+}
+
+.contact-us-address-map #map-canvas {
+  height: 300px;
+  margin: 0 0 10px 0
+}

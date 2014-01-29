@@ -1,0 +1,134 @@
+<?php
+
+/**
+ * @file
+ * Implements various blocks for the site.
+ */
+
+/**
+ * Implements of hook_menu().
+ */
+function carwash_blocks_menu() {
+  $items['admin/config/carwash'] = array(
+    'title' => 'Lavadero Moreno',
+    'description' => 'Adjust Virgin Mega modules settings.',
+    'position' => 'right',
+    'weight' => -5,
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+  $items['admin/config/carwash/blocks/profile'] = array(
+    'title' => 'Perfil',
+    'description' => 'Cambiar las configuraciones del perfil.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('carwash_blocks_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'carwash_blocks.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function carwash_blocks_block_info() {
+  $blocks['contact_us'] = array(
+    'info' => t('Contact us'),
+    'status' => TRUE,
+    'region' => 'home_area_3',
+    'weight' => 0,
+    'visibility' => 0,
+  );
+  $blocks['contact_us_sidebar'] = array(
+    'info' => t('Contact us'),
+    'status' => TRUE,
+    'region' => 'sidebar_first',
+    'weight' => 0,
+    'visibility' => 0,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function carwash_blocks_block_view($delta = '') {
+  switch ($delta) {
+    case 'contact_us':
+      $block['subject'] = t('Contact us');
+      $block['content'] = carwash_contact_us_block();
+      break;
+
+    case 'contact_us_sidebar':
+      $variables = array(
+        'profile_latitude' => variable_get('carwash_profile_latitude', NULL),
+        'profile_longitude' => variable_get('carwash_profile_longitude', NULL),
+      );
+      drupal_add_js(array('carwash_blocks' => array('variables' => $variables)), 'setting');
+      $block['subject'] = t('Contact us');
+      $block['content'] = array(
+        '#markup' => carwash_contact_us_block(),
+        '#attached' => array(
+          'js' => array(
+            'https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=visualization&sensor=false' => array(
+              'type' => 'external',
+              'scope' => 'header',
+            ),
+            drupal_get_path('module', 'carwash_blocks') . '/js/contact_us_googlemap.js' => array(
+              'type' => 'file',
+              'scope' => 'header',
+            ),
+          ),
+        ),
+      );
+      break;
+  }
+
+  return $block;
+}
+
+/**
+ * The hook_view contact_us callback.
+ */
+function carwash_contact_us_block() {
+  $variables = array(
+    'profile_phone' => variable_get('carwash_profile_phone', NULL),
+    'profile_cellphone' => variable_get('carwash_profile_cellphone', NULL),
+    'profile_address' => variable_get('carwash_profile_address', NULL),
+    'profile_email' => variable_get('carwash_profile_email', NULL),
+    'profile_facebook' => variable_get('carwash_profile_facebook', NULL),
+  );
+  return theme('carwash_blocks_contact_us', $variables);
+}
+
+/**
+ * The hook_view about_us callback.
+ */
+function carwash_about_us_block() {
+  $variables = array(
+    'profile_about_us' => variable_get('carwash_profile_about_us', NULL),
+  );
+  return theme('carwash_blocks_about_us', $variables);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function carwash_blocks_theme($existing, $type, $theme, $path) {
+  return array(
+    'carwash_blocks_contact_us' => array(
+      'variables' => array(
+        'profile_phone' => NULL,
+        'profile_cellphone' => NULL,
+        'profile_address' => NULL,
+        'profile_email' => NULL,
+        'profile_facebook' => NULL,
+      ),
+      'path' => drupal_get_path('module', 'carwash_blocks') . '/templates',
+      'template' => 'carwash-blocks-contact-us',
+    ),
+  );
+}

@@ -1,0 +1,6 @@
+name = Carwash Custom
+description = All extra functions
+package = Neschi Dev Team - Lavadero Moreno
+core = 7.x
+
+stylesheets[all][] = css/backend-carwash-custom.css

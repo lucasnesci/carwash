@@ -1,0 +1,59 @@
+name = Drupal CMS
+description = Custom CMS integration project.
+version = 1.0
+core = 7.x
+
+;Core
+dependencies[] = block
+dependencies[] = color
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = dashboard
+dependencies[] = help
+dependencies[] = image
+dependencies[] = list
+dependencies[] = menu
+dependencies[] = number
+dependencies[] = options
+dependencies[] = path
+dependencies[] = taxonomy
+dependencies[] = dblog
+dependencies[] = search
+dependencies[] = shortcut
+dependencies[] = overlay
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = rdf
+dependencies[] = contact
+;dependencies[] = locale
+
+;Contrib
+dependencies[] = admin_menu
+dependencies[] = admin_menu_toolbar
+dependencies[] = ctools
+dependencies[] = diff
+dependencies[] = entity
+dependencies[] = entityreference
+dependencies[] = features
+;dependencies[] = fe_block
+;dependencies[] = l10n_update
+dependencies[] = libraries
+dependencies[] = strongarm
+dependencies[] = views
+dependencies[] = views_ui
+dependencies[] = views_bulk_operations
+dependencies[] = wysiwyg
+dependencies[] = blockexport
+dependencies[] = date
+dependencies[] = date_popup
+dependencies[] = field_collection
+
+;Features
+dependencies[] = carwash_views
+dependencies[] = carwash_content_types
+dependencies[] = carwash_all_blocks
+dependencies[] = carwash_menus
+
+;Custom modules
+dependencies[] = carwash_blocks
+dependencies[] = carwash_custom

@@ -1,0 +1,85 @@
+/**
+ * Promotion view page.
+ */
+.promotion-page-row {
+  border: 1px solid #ced1da;
+  background: #eef0f5;
+  padding: 1%;
+  margin: 20px 0;
+  max-width: 97.5%;
+}
+
+.view-id-view_promotions.view-display-id-page .views-field-title {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.view-id-view_promotions.view-display-id-page .views-field-field-image-field img {
+  padding: 1%;
+  margin: 10px 0;
+  max-width: 97.5%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.promotion-page-validity-date,
+.promotion-page-validity-label {
+  display: inline;
+  font-size: 10px;
+}
+
+.promotion-page-validity-label {
+  font-weight: bold;
+}
+
+.promotion-page-validity {
+  margin-top: 10px;
+}
+
+/**
+ * Promotion view block.
+ */
+.promotion-block-row h3 {
+  margin: 0px;
+}
+
+.promotion-block-row {
+  margin: 0px 0px 10px 0px;
+}
+
+.view-id-view_promotions.view-display-id-block .more-link {
+  background: #11719F;
+  border: none;
+  color: #FFFFFF;
+  float: right;
+  font-weight: bold;
+  margin: 7px 0 0 7px;
+  cursor: pointer;
+  font-family: Arial, Verdana, Helvetica, sans-serif;
+  padding: 10px;
+}
+
+.view-id-view_promotions.view-display-id-block .more-link a {
+  font-size: 12px;
+  padding: 0 5px 0 5px;
+  color: #FFFFFF;
+}
+
+/**
+ * Gallery images.
+ */
+.view-id-gallery .gallery-image-general {
+  text-align: center;
+}
+
+.view-id-gallery .views-row {
+  display: inline-block;
+}
+
+/**
+ * Hide social network bar.
+ */
+#network {
+  display: none;
+}

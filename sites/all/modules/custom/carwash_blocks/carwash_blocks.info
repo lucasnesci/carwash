@@ -1,0 +1,6 @@
+name = Car Wash Blocks
+description = Provide all custom blocks for the site.
+package = Neschi Dev Team - Lavadero Moreno
+core = 7.x
+configure = admin/config/carwash/blocks/profile
+stylesheets[all][] = css/contact_us.css

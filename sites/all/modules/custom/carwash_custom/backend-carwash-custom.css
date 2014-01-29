@@ -1,0 +1,13 @@
+/**
+ * Customize add service page.
+ */
+#field-lavadero-values .field-type-taxonomy-term-reference label,
+#field-lavadero-values .field-type-number-float label {
+  display: inline-block;
+  min-width: 60px;
+  padding: 0 0 10px 0;
+}
+
+.container-inline-date .form-item .form-item {
+  padding: 0px 0px 0px 0px;
+}
