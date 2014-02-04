@@ -74,24 +74,6 @@ function carwash_views_views_default_views() {
   $handler->display->display_options['menu']['name'] = 'main-menu';
   $handler->display->display_options['menu']['context'] = 0;
   $handler->display->display_options['menu']['context_only_inline'] = 0;
-  $translatables['gallery'] = array(
-    t('Master'),
-    t('Gallery'),
-    t('more'),
-    t('Apply'),
-    t('Reset'),
-    t('Sort by'),
-    t('Asc'),
-    t('Desc'),
-    t('Items per page'),
-    t('- All -'),
-    t('Offset'),
-    t('« first'),
-    t('‹ previous'),
-    t('next ›'),
-    t('last »'),
-    t('Page'),
-  );
   $export['gallery'] = $view;
 
   $view = new view();
@@ -141,22 +123,11 @@ function carwash_views_views_default_views() {
   $handler->display->display_options['filters']['type']['table'] = 'node';
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
-    'ct_our_services' => 'ct_our_services',
+    'ct_about_us' => 'ct_about_us',
   );
 
   /* Display: Block */
   $handler = $view->new_display('block', 'Block', 'block');
-  $translatables['our_services'] = array(
-    t('Master'),
-    t('Our services'),
-    t('more'),
-    t('Apply'),
-    t('Reset'),
-    t('Sort by'),
-    t('Asc'),
-    t('Desc'),
-    t('Block'),
-  );
   $export['our_services'] = $view;
 
   $view = new view();
@@ -184,7 +155,7 @@ function carwash_views_views_default_views() {
   $handler->display->display_options['style_options']['class'] = 'slides';
   $handler->display->display_options['style_options']['wrapper_class'] = 'flexslider';
   $handler->display->display_options['row_plugin'] = 'fields';
-  /* Field: Content: Front images */
+  /* Field: Content: Slideshow images */
   $handler->display->display_options['fields']['field_front_images']['id'] = 'field_front_images';
   $handler->display->display_options['fields']['field_front_images']['table'] = 'field_data_field_front_images';
   $handler->display->display_options['fields']['field_front_images']['field'] = 'field_front_images';
@@ -224,23 +195,6 @@ function carwash_views_views_default_views() {
 
   /* Display: Block */
   $handler = $view->new_display('block', 'Block', 'block');
-  $translatables['slideshow'] = array(
-    t('Master'),
-    t('more'),
-    t('Apply'),
-    t('Reset'),
-    t('Sort by'),
-    t('Asc'),
-    t('Desc'),
-    t('Items per page'),
-    t('- All -'),
-    t('Offset'),
-    t('« first'),
-    t('‹ previous'),
-    t('next ›'),
-    t('last »'),
-    t('Block'),
-  );
   $export['slideshow'] = $view;
 
   $view = new view();
@@ -300,18 +254,6 @@ function carwash_views_views_default_views() {
 
   /* Display: Block */
   $handler = $view->new_display('block', 'Block', 'block_1');
-  $translatables['view_about_us'] = array(
-    t('Master'),
-    t('About us'),
-    t('more'),
-    t('Apply'),
-    t('Reset'),
-    t('Sort by'),
-    t('Asc'),
-    t('Desc'),
-    t('More..'),
-    t('Block'),
-  );
   $export['view_about_us'] = $view;
 
   $view = new view();
@@ -589,7 +531,7 @@ function carwash_views_views_default_views() {
     1 => 0,
     3 => 0,
   );
-  /* Filter criterion: Date: Date (node) */
+  /* Filter criterion: Broken/missing handler */
   $handler->display->display_options['filters']['date_filter']['id'] = 'date_filter';
   $handler->display->display_options['filters']['date_filter']['table'] = 'node';
   $handler->display->display_options['filters']['date_filter']['field'] = 'date_filter';
@@ -605,39 +547,11 @@ function carwash_views_views_default_views() {
     1 => 0,
     3 => 0,
   );
-  $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
-    'node.created' => 'node.created',
-    'node.changed' => 'node.changed',
-  );
 
   /* Display: System */
   $handler = $view->new_display('system', 'System', 'system_1');
   $handler->display->display_options['defaults']['access'] = FALSE;
   $handler->display->display_options['path'] = 'admin/content';
-  $translatables['view_content'] = array(
-    t('Master'),
-    t('Content'),
-    t('more'),
-    t('Apply'),
-    t('Reset'),
-    t('Sort by'),
-    t('Asc'),
-    t('Desc'),
-    t('Items per page'),
-    t('- All -'),
-    t('Offset'),
-    t('« first'),
-    t('‹ previous'),
-    t('next ›'),
-    t('last »'),
-    t('Title or order'),
-    t('Client patent'),
-    t('Type'),
-    t('Updated'),
-    t('Operations'),
-    t('Created or updated'),
-    t('System'),
-  );
   $export['view_content'] = $view;
 
   $view = new view();
@@ -759,25 +673,6 @@ function carwash_views_views_default_views() {
   $handler->display->display_options['menu']['name'] = 'main-menu';
   $handler->display->display_options['menu']['context'] = 0;
   $handler->display->display_options['menu']['context_only_inline'] = 0;
-  $translatables['view_promotions'] = array(
-    t('Master'),
-    t('Promotions'),
-    t('more...'),
-    t('Apply'),
-    t('Reset'),
-    t('Sort by'),
-    t('Asc'),
-    t('Desc'),
-    t('Items per page'),
-    t('- All -'),
-    t('Offset'),
-    t('« first'),
-    t('‹ previous'),
-    t('next ›'),
-    t('last »'),
-    t('Page'),
-    t('more'),
-  );
   $export['view_promotions'] = $view;
 
   return $export;

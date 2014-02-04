@@ -33,7 +33,6 @@ function carwash_custom_form_ct_service_node_form_alter(&$form, $form_state) {
   $form['title']['#required'] = FALSE;
   $form['title']['#attributes']['disabled'] = 'disabled';
   $form['#submit'][] = 'form_ct_service_submit';
-  dsm($form);
 }
 
 /**

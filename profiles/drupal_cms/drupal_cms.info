@@ -25,7 +25,7 @@ dependencies[] = field_ui
 dependencies[] = file
 dependencies[] = rdf
 dependencies[] = contact
-;dependencies[] = locale
+dependencies[] = locale
 
 ;Contrib
 dependencies[] = admin_menu
@@ -36,7 +36,7 @@ dependencies[] = entity
 dependencies[] = entityreference
 dependencies[] = features
 ;dependencies[] = fe_block
-;dependencies[] = l10n_update
+dependencies[] = l10n_update
 dependencies[] = libraries
 dependencies[] = strongarm
 dependencies[] = views
@@ -47,6 +47,8 @@ dependencies[] = blockexport
 dependencies[] = date
 dependencies[] = date_popup
 dependencies[] = field_collection
+dependencies[] = shs
+dependencies[] = field_group
 
 ;Features
 dependencies[] = carwash_views

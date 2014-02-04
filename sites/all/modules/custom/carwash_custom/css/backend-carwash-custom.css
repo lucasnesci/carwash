@@ -1,9 +1,9 @@
 /**
  * Customize add service page.
  */
- #field-lavadero-values .field-type-taxonomy-term-reference label,
- #field-lavadero-values .form-item-field-lavadero-und-0-field-price-und-0-value label {
+ #field-lavadero-values .draggable label,
+ #field-lubricentro-values .draggable label {
   display: inline-block;
-  min-width: 60px;
+  min-width: 80px;
   padding: 0 0 10px 0;
  }
